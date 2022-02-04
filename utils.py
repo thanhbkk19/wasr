@@ -77,10 +77,10 @@ def get_loaders(
     return train_loader,val_loader
 
 
-if __name__ =="__main__":
-    info_path = "/home/gumiho/project/WASR_seg/WASR/class_dict.csv"
-    img = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train/0001.png").convert("RGB"))
-    label = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train_labels/0001m.png").convert("RGB"))
-    se = convert_data(img,label,info_path)
-    print(se[0].shape)
-    print(se[1].shape)
+# if __name__ =="__main__":
+#     info_path = "/home/gumiho/project/WASR_seg/WASR/class_dict.csv"
+#     img = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train/0001.png").convert("RGB"))
+#     label = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train_labels/0001m.png").convert("RGB"))
+#     se = convert_data(img,label,info_path)
+#     print(se[0].shape)
+#     print(se[1].shape)
