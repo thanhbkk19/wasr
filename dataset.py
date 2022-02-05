@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 import os
 import pandas as pd
+
 def get_labels_info(info_path):
     info = pd.read_csv(info_path)
     # info has format: [['obstacles' 59 193 246]...]
@@ -16,8 +17,6 @@ def get_labels_info(info_path):
 
 def convert_data(img, label, info_path):
     img = img/255.0
-    img = np.array(img, dtype=np.float32)
-    #img = np.transpose(img,(2,0,1))
     class_names, labels_values = get_labels_info(info_path)
     sematic_maps = []
     for color in labels_values:
@@ -25,8 +24,8 @@ def convert_data(img, label, info_path):
         class_map = np.all(same,axis=-1)
         sematic_maps.append(class_map)
     semantic_map = np.array(np.stack(sematic_maps,axis=-1))
-    #semantic_map = np.transpose(semantic_map,(2,0,1))
     return img, semantic_map
+
 
 
 class WASR_dataset(Dataset):
@@ -43,7 +42,7 @@ class WASR_dataset(Dataset):
     def __getitem__(self,idx):
         img_path = os.path.join(self.image_dir,self.images[idx])
         label_path = os.path.join(self.label_dir, self.images[idx].replace(".png","m.png"))
-        img = np.array(Image.open(img_path).convert("RGB"))
+        img = np.array(Image.open(img_path).convert("RGB"),dtype=np.float32)
         label = np.array(Image.open(label_path),dtype=np.float32)
 
         img, label = convert_data(img, label, self.info_path)
@@ -51,7 +50,6 @@ class WASR_dataset(Dataset):
             augmentation = self.transform(image=img,mask=label)
             img = augmentation["image"]
             label = augmentation["mask"]
-        print(type(img),img.shape)
-        print(type(label),label.shape)
+
         return img, label
 

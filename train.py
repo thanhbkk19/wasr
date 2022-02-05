@@ -27,12 +27,14 @@ def train_fn(loader, model, optimizer, loss_fn, scaler):
     loop = tqdm(loader)
     for batch_idx, (data,target) in enumerate(loop):
         data = data.to(device=device)
-        target = target.float().unsqueeze(1).to(device=device)
+        target = target.float().to(device=device)
         #forward
+        target = target.permute(0,3,1,2)
 
     #forward
         with torch.cuda.amp.autocast():
             predictions = model(data)
+
             loss = loss_fn(predictions,target)
 
         #backward
@@ -78,8 +80,8 @@ def main():
             "optimizer":optimizer.state_dict(),
             }
         save_checkpoints(checkpoint)
-        # check_accuracy(val_loader, model, device=device)
-        # save_predictions_as_imgs(val_loader,model,path="predictions",device=device)
+        check_accuracy(val_loader, model, device=device)
+        save_predictions_as_imgs(val_loader,model,path="predictions",device=device)
 
 if __name__ =="__main__":
     main()

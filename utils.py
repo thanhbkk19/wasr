@@ -5,6 +5,8 @@ import pandas as pd
 from PIL import Image
 from dataset import *
 from torch.utils.data import Dataset, DataLoader
+import torchvision
+import cv2
 def get_image(image_path,label_path):
     pass
 
@@ -76,11 +78,57 @@ def get_loaders(
     )
     return train_loader,val_loader
 
+def check_accuracy(loader, model, batch_size = 8, device="cuda"):
+    num_correct = 0
+    num_pixels = 0
+    model.eval()
+    with torch.no_grad():
+        for x,y in loader:
+            x = x.to(device)
+            y = y.to(device)
+            y = y.permute(0,3,1,2)
+            preds = torch.sigmoid(model(x))
+            preds = (preds>0.5).float()
+            num_correct += (preds==y).sum()
+            num_pixels += torch.numel(preds)
+    print(f"Got {num_correct}/{num_pixels*batch_size} ----> accuracy = {num_correct/num_pixels*100:.2f}")
+    model.train()
 
-# if __name__ =="__main__":
-#     info_path = "/home/gumiho/project/WASR_seg/WASR/class_dict.csv"
-#     img = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train/0001.png").convert("RGB"))
-#     label = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train_labels/0001m.png").convert("RGB"))
-#     se = convert_data(img,label,info_path)
-#     print(se[0].shape)
-#     print(se[1].shape)
+def one_hot_reverse(preds,info_path="WASR/class_dict.csv"):
+    class_names, labels_values = get_labels_info(info_path)
+    preds_np = np.array(preds,dtype=np.float32)
+    img = np.argmax(preds_np,axis=1)
+    img_color = labels_values[img.astype(int)]
+    #img_color = torch.Tensor(img_color).permute(0,3,1,2)
+    return img_color
+
+def save_predictions_as_imgs(loader, model, path = "predictions",device = "cuda",info_path="WASR/class_dict.csv"):
+    model.eval()
+    
+    for idx, (x,y) in enumerate(loader):
+        x = x.to(device=device)
+        with torch.no_grad():
+            preds = torch.sigmoid(model(x))
+            #preds = (preds >0.5).float()
+        preds = one_hot_reverse(preds)
+        for i in range(len(preds)):
+            cv2.imwrite(f"{path}/model_predict/pred_{idx}_{i}.png",preds[i])
+        # torchvision.utils.save_image(y.unsqueeze(1),f"{path}/label/label_{idx}.png")
+    model.train()
+
+if __name__ =="__main__":
+    info_path = "/home/gumiho/project/WASR_seg/WASR/class_dict.csv"
+    img = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train/0001.png").convert("RGB"))
+    label = np.array(Image.open("/home/gumiho/project/WASR_seg/WASR/train_labels/0001m.png").convert("RGB"))
+    se = convert_data(img,label,info_path)
+    print(se[0].shape)
+    print(se[1].shape)
+    x = np.random.randint(3,size=[8,3,256,256])
+    x = torch.Tensor(x)
+    img = one_hot_reverse(x)
+    print(img.shape)
+    print(img)
+    import cv2
+    cv2.imwrite("predictions/label/2.png",img[0])
+    #torchvision.utils.save_image(img[0],f"predictions/label/1.png")
+
